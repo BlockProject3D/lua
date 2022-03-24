@@ -28,6 +28,7 @@
 
 mod engine;
 mod ext;
+mod macros;
 pub mod number;
 
 #[cfg(feature = "math")]
@@ -35,6 +36,9 @@ pub mod math;
 
 #[cfg(feature = "vector")]
 pub mod vector;
+
+#[cfg(feature = "quaternion")]
+pub mod quaternion;
 
 pub use engine::*;
 pub use ext::*;

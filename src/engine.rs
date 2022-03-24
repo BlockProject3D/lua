@@ -27,19 +27,6 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use rlua::{Context, FromLuaMulti, Lua, StdLib, Table, ToLua, ToLuaMulti, Value};
-
-macro_rules! auto_lib {
-    ($lua: ident ($lib: ident, $self_callable: expr) { $($name: ident: $fn: ident,)* }) => {
-        $lua.create_library($lib, $self_callable, |ctx| {
-            $(
-                ctx.function(stringify!($name), $fn)?;
-            )*
-            Ok(())
-        })
-    };
-}
-
-pub(crate) use auto_lib;
 use crate::TableExt;
 
 pub struct LibContext<'a> {
@@ -107,5 +94,4 @@ impl LuaEngine {
 
     //TODO: quaternion library
     //TODO: matrix library
-    //TODO: vector library
 }

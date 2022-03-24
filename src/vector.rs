@@ -30,6 +30,10 @@ use nalgebra::{Vector2, Vector3, Vector4};
 use rlua::{Context, FromLua, Function, Number, ToLua, Value};
 use crate::{LuaEngine, ValueExt};
 use crate::number::{Num, Int, NumFromLua, NumToLua};
+use crate::macros::vec_wrapper_3;
+use crate::macros::vec_wrapper_1;
+use crate::macros::vec_wrapper_2_uniform;
+use crate::macros::auto_lib;
 
 pub trait Lib {
     fn load_vec2(&self) -> rlua::Result<()>;
@@ -186,102 +190,77 @@ impl<'lua, T> FromLua<'lua> for LuaVec4<T>
     }
 }
 
-type Vec2 = LuaVec2<Number>;
-type Vec3 = LuaVec3<Number>;
-type Vec4 = LuaVec4<Number>;
-
-macro_rules! vec_wrapper {
-    ($name: ident ($this: ident $other: ident): $in: ty => $out: ty { $code: expr }) => {
-        fn $name<'a>(_: Context<'a>, (this, other): ($in, $in)) -> rlua::Result<$out> {
-            let $this = this.into_inner();
-            let $other = other.into_inner();
-            Ok($code)
-        }
-    };
-}
-
-macro_rules! vec_wrapper_unary {
-    ($name: ident ($this: ident): $in: ty => $out: ty { $code: expr }) => {
-        fn $name<'a>(_: Context<'a>, this: $in) -> rlua::Result<$out> {
-            let $this = this.into_inner();
-            Ok($code)
-        }
-    };
-}
-
-macro_rules! vec_wrapper_lerp {
-    ($name: ident (($this: ident $other: ident): $in: ty, $val_name: ident: $val: ty) => $out: ty { $code: expr }) => {
-        fn $name<'a>(_: Context<'a>, (this, other, $val_name): ($in, $in, $val)) -> rlua::Result<$out> {
-            let $this = this.into_inner();
-            let $other = other.into_inner();
-            Ok($code)
-        }
-    };
-}
+pub(crate) type Vec2 = LuaVec2<Number>;
+pub(crate) type Vec3 = LuaVec3<Number>;
+pub(crate) type Vec4 = LuaVec4<Number>;
 
 fn argminmax_to_lua((id, val): (usize, Number)) -> (Int, Num) {
     (Int(id as _), Num(val))
 }
 
-vec_wrapper!(vec2_add (a b): Vec2 => Vec2 {(a + b).into()});
-vec_wrapper!(vec2_sub (a b): Vec2 => Vec2 {(a - b).into()});
-vec_wrapper!(vec2_mul (a b): Vec2 => Vec2 {a.component_mul(&b).into()});
-vec_wrapper!(vec2_div (a b): Vec2 => Vec2 {a.component_div(&b).into()});
-vec_wrapper!(vec2_le (a b): Vec2 => bool {a <= b});
-vec_wrapper!(vec2_lt (a b): Vec2 => bool {a < b});
-vec_wrapper!(vec2_eq (a b): Vec2 => bool {a == b});
-vec_wrapper_unary!(vec2_unm (a): Vec2 => Vec2 {(-a).into()});
-vec_wrapper!(vec2_dot (a b): Vec2 => Number {a.dot(&b)});
-vec_wrapper!(vec2_cross (a b): Vec2 => Vec2 {a.cross(&b).into()});
-vec_wrapper_unary!(vec2_norm (a): Vec2 => Number {a.norm()});
-vec_wrapper_unary!(vec2_norm_squared (a): Vec2 => Number {a.norm_squared()});
-vec_wrapper_unary!(vec2_argmin (a): Vec2 => (Int, Num) {argminmax_to_lua(a.argmin())});
-vec_wrapper_unary!(vec2_argmax (a): Vec2 => (Int, Num) {argminmax_to_lua(a.argmax())});
-vec_wrapper_lerp!(vec2_lerp ((a b): Vec2, f: Num) => Vec2 {a.lerp(&b, f.0).into()});
-vec_wrapper_lerp!(vec2_slerp ((a b): Vec2, f: Num) => Vec2 {a.slerp(&b, f.0).into()});
+vec_wrapper_2_uniform!(vec2_add (a, b): Vec2 => Vec2 {(a + b).into()});
+vec_wrapper_2_uniform!(vec2_sub (a, b): Vec2 => Vec2 {(a - b).into()});
+vec_wrapper_2_uniform!(vec2_mul (a, b): Vec2 => Vec2 {a.component_mul(&b).into()});
+vec_wrapper_2_uniform!(vec2_div (a, b): Vec2 => Vec2 {a.component_div(&b).into()});
+vec_wrapper_2_uniform!(vec2_le (a, b): Vec2 => bool {a <= b});
+vec_wrapper_2_uniform!(vec2_lt (a, b): Vec2 => bool {a < b});
+vec_wrapper_2_uniform!(vec2_eq (a, b): Vec2 => bool {a == b});
+vec_wrapper_1!(vec2_unm (a: Vec2) => Vec2 {(-a).into()});
+vec_wrapper_2_uniform!(vec2_dot (a, b): Vec2 => Number {a.dot(&b)});
+vec_wrapper_2_uniform!(vec2_cross (a, b): Vec2 => Vec2 {a.cross(&b).into()});
+vec_wrapper_1!(vec2_norm (a: Vec2) => Number {a.norm()});
+vec_wrapper_1!(vec2_norm_squared (a: Vec2) => Number {a.norm_squared()});
+vec_wrapper_1!(vec2_argmin (a: Vec2) => (Int, Num) {argminmax_to_lua(a.argmin())});
+vec_wrapper_1!(vec2_argmax (a: Vec2) => (Int, Num) {argminmax_to_lua(a.argmax())});
+vec_wrapper_1!(vec2_normalize (a: Vec2) => Vec2 {a.normalize().into()});
+vec_wrapper_3!(vec2_lerp (a: Vec2, b: Vec2, f: Num) => Vec2 {a.lerp(&b.into_inner(), f.0).into()});
+vec_wrapper_3!(vec2_slerp (a: Vec2, b: Vec2, f: Num) => Vec2 {a.slerp(&b.into_inner(), f.0).into()});
 
-vec_wrapper!(vec3_add (a b): Vec3 => Vec3 {(a + b).into()});
-vec_wrapper!(vec3_sub (a b): Vec3 => Vec3 {(a - b).into()});
-vec_wrapper!(vec3_mul (a b): Vec3 => Vec3 {a.component_mul(&b).into()});
-vec_wrapper!(vec3_div (a b): Vec3 => Vec3 {a.component_div(&b).into()});
-vec_wrapper!(vec3_le (a b): Vec3 => bool {a <= b});
-vec_wrapper!(vec3_lt (a b): Vec3 => bool {a < b});
-vec_wrapper!(vec3_eq (a b): Vec3 => bool {a == b});
-vec_wrapper_unary!(vec3_unm (a): Vec3 => Vec3 {(-a).into()});
-vec_wrapper!(vec3_dot (a b): Vec3 => Number {a.dot(&b)});
-vec_wrapper!(vec3_cross (a b): Vec3 => Vec3 {a.cross(&b).into()});
-vec_wrapper_unary!(vec3_norm (a): Vec3 => Number {a.norm()});
-vec_wrapper_unary!(vec3_norm_squared (a): Vec3 => Number {a.norm_squared()});
-vec_wrapper_unary!(vec3_argmin (a): Vec3 => (Int, Num) {argminmax_to_lua(a.argmin())});
-vec_wrapper_unary!(vec3_argmax (a): Vec3 => (Int, Num) {argminmax_to_lua(a.argmax())});
-vec_wrapper_lerp!(vec3_lerp ((a b): Vec3, f: Num) => Vec3 {a.lerp(&b, f.0).into()});
-vec_wrapper_lerp!(vec3_slerp ((a b): Vec3, f: Num) => Vec3 {a.slerp(&b, f.0).into()});
+vec_wrapper_2_uniform!(vec3_add (a, b): Vec3 => Vec3 {(a + b).into()});
+vec_wrapper_2_uniform!(vec3_sub (a, b): Vec3 => Vec3 {(a - b).into()});
+vec_wrapper_2_uniform!(vec3_mul (a, b): Vec3 => Vec3 {a.component_mul(&b).into()});
+vec_wrapper_2_uniform!(vec3_div (a, b): Vec3 => Vec3 {a.component_div(&b).into()});
+vec_wrapper_2_uniform!(vec3_le (a, b): Vec3 => bool {a <= b});
+vec_wrapper_2_uniform!(vec3_lt (a, b): Vec3 => bool {a < b});
+vec_wrapper_2_uniform!(vec3_eq (a, b): Vec3 => bool {a == b});
+vec_wrapper_1!(vec3_unm (a: Vec3) => Vec3 {(-a).into()});
+vec_wrapper_2_uniform!(vec3_dot (a, b): Vec3 => Number {a.dot(&b)});
+vec_wrapper_2_uniform!(vec3_cross (a, b): Vec3 => Vec3 {a.cross(&b).into()});
+vec_wrapper_1!(vec3_norm (a: Vec3) => Number {a.norm()});
+vec_wrapper_1!(vec3_norm_squared (a: Vec3) => Number {a.norm_squared()});
+vec_wrapper_1!(vec3_argmin (a: Vec3) => (Int, Num) {argminmax_to_lua(a.argmin())});
+vec_wrapper_1!(vec3_argmax (a: Vec3) => (Int, Num) {argminmax_to_lua(a.argmax())});
+vec_wrapper_1!(vec3_normalize (a: Vec3) => Vec3 {a.normalize().into()});
+vec_wrapper_3!(vec3_lerp (a: Vec3, b: Vec3, f: Num) => Vec3 {a.lerp(&b.into_inner(), f.0).into()});
+vec_wrapper_3!(vec3_slerp (a: Vec3, b: Vec3, f: Num) => Vec3 {a.slerp(&b.into_inner(), f.0).into()});
 
-vec_wrapper!(vec4_add (a b): Vec4 => Vec4 {(a + b).into()});
-vec_wrapper!(vec4_sub (a b): Vec4 => Vec4 {(a - b).into()});
-vec_wrapper!(vec4_mul (a b): Vec4 => Vec4 {a.component_mul(&b).into()});
-vec_wrapper!(vec4_div (a b): Vec4 => Vec4 {a.component_div(&b).into()});
-vec_wrapper!(vec4_le (a b): Vec4 => bool {a <= b});
-vec_wrapper!(vec4_lt (a b): Vec4 => bool {a < b});
-vec_wrapper!(vec4_eq (a b): Vec4 => bool {a == b});
-vec_wrapper_unary!(vec4_unm (a): Vec4 => Vec4 {(-a).into()});
-vec_wrapper!(vec4_dot (a b): Vec4 => Number {a.dot(&b)});
-vec_wrapper!(vec4_cross (a b): Vec4 => Vec4 {a.cross(&b).into()});
-vec_wrapper_unary!(vec4_norm (a): Vec4 => Number {a.norm()});
-vec_wrapper_unary!(vec4_norm_squared (a): Vec4 => Number {a.norm_squared()});
-vec_wrapper_unary!(vec4_argmin (a): Vec4 => (Int, Num) {argminmax_to_lua(a.argmin())});
-vec_wrapper_unary!(vec4_argmax (a): Vec4 => (Int, Num) {argminmax_to_lua(a.argmax())});
-vec_wrapper_lerp!(vec4_lerp ((a b): Vec4, f: Num) => Vec4 {a.lerp(&b, f.0).into()});
-vec_wrapper_lerp!(vec4_slerp ((a b): Vec4, f: Num) => Vec4 {a.slerp(&b, f.0).into()});
+vec_wrapper_2_uniform!(vec4_add (a, b): Vec4 => Vec4 {(a + b).into()});
+vec_wrapper_2_uniform!(vec4_sub (a, b): Vec4 => Vec4 {(a - b).into()});
+vec_wrapper_2_uniform!(vec4_mul (a, b): Vec4 => Vec4 {a.component_mul(&b).into()});
+vec_wrapper_2_uniform!(vec4_div (a, b): Vec4 => Vec4 {a.component_div(&b).into()});
+vec_wrapper_2_uniform!(vec4_le (a, b): Vec4 => bool {a <= b});
+vec_wrapper_2_uniform!(vec4_lt (a, b): Vec4 => bool {a < b});
+vec_wrapper_2_uniform!(vec4_eq (a, b): Vec4 => bool {a == b});
+vec_wrapper_1!(vec4_unm (a: Vec4) => Vec4 {(-a).into()});
+vec_wrapper_2_uniform!(vec4_dot (a, b): Vec4 => Number {a.dot(&b)});
+vec_wrapper_2_uniform!(vec4_cross (a, b): Vec4 => Vec4 {a.cross(&b).into()});
+vec_wrapper_1!(vec4_norm (a: Vec4) => Number {a.norm()});
+vec_wrapper_1!(vec4_norm_squared (a: Vec4) => Number {a.norm_squared()});
+vec_wrapper_1!(vec4_argmin (a: Vec4) => (Int, Num) {argminmax_to_lua(a.argmin())});
+vec_wrapper_1!(vec4_argmax (a: Vec4) => (Int, Num) {argminmax_to_lua(a.argmax())});
+vec_wrapper_1!(vec4_normalize (a: Vec4) => Vec4 {a.normalize().into()});
+vec_wrapper_3!(vec4_lerp (a: Vec4, b: Vec4, f: Num) => Vec4 {a.lerp(&b.into_inner(), f.0).into()});
+vec_wrapper_3!(vec4_slerp (a: Vec4, b: Vec4, f: Num) => Vec4 {a.slerp(&b.into_inner(), f.0).into()});
 
 impl Lib for LuaEngine {
     fn load_vec2(&self) -> rlua::Result<()> {
         //Create the metatable.
-        crate::engine::auto_lib!(self (VEC2_LIB, true) {
+        auto_lib!(self (VEC2_LIB, true) {
             __add: vec2_add, __sub: vec2_sub, __mul: vec2_mul, __div: vec2_div,
             __le: vec2_le, __lt: vec2_lt, __eq: vec2_eq, __unm: vec2_unm,
             dot: vec2_dot, cross: vec2_cross, norm: vec2_norm, normSquared: vec2_norm_squared,
             argmin: vec2_argmin, argmax: vec2_argmax, lerp: vec2_lerp, slerp: vec2_slerp,
+            normalize: vec2_normalize,
         })?;
         //Create constructor function.
         self.context(|ctx| {
@@ -301,11 +280,12 @@ impl Lib for LuaEngine {
 
     fn load_vec3(&self) -> rlua::Result<()> {
         //Create the metatable.
-        crate::engine::auto_lib!(self (VEC3_LIB, true) {
+        auto_lib!(self (VEC3_LIB, true) {
             __add: vec3_add, __sub: vec3_sub, __mul: vec3_mul, __div: vec3_div,
             __le: vec3_le, __lt: vec3_lt, __eq: vec3_eq, __unm: vec3_unm,
             dot: vec3_dot, cross: vec3_cross, norm: vec3_norm, normSquared: vec3_norm_squared,
             argmin: vec3_argmin, argmax: vec3_argmax, lerp: vec3_lerp, slerp: vec3_slerp,
+            normalize: vec3_normalize,
         })?;
         //Create constructor function.
         self.context(|ctx| {
@@ -326,11 +306,12 @@ impl Lib for LuaEngine {
 
     fn load_vec4(&self) -> rlua::Result<()> {
         //Create the metatable.
-        crate::engine::auto_lib!(self (VEC4_LIB, true) {
+        auto_lib!(self (VEC4_LIB, true) {
             __add: vec4_add, __sub: vec4_sub, __mul: vec4_mul, __div: vec4_div,
             __le: vec4_le, __lt: vec4_lt, __eq: vec4_eq, __unm: vec4_unm,
             dot: vec4_dot, cross: vec4_cross, norm: vec4_norm, normSquared: vec4_norm_squared,
             argmin: vec4_argmin, argmax: vec4_argmax, lerp: vec4_lerp, slerp: vec4_slerp,
+            normalize: vec4_normalize,
         })?;
         //Create constructor function.
         self.context(|ctx| {
