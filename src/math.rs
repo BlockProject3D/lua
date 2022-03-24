@@ -68,6 +68,12 @@ impl Lib for LuaEngine {
             ctx.function("acos", |_, x: Num| Ok(x.0.acos()))?;
             ctx.function("asin", |_, x: Num| Ok(x.0.asin()))?;
             ctx.function("atan", |_, x: Num| Ok(x.0.atan()))?;
+            ctx.function("cosh", |_, x: Num| Ok(x.0.cosh()))?;
+            ctx.function("sinh", |_, x: Num| Ok(x.0.sinh()))?;
+            ctx.function("tanh", |_, x: Num| Ok(x.0.tanh()))?;
+            ctx.function("acosh", |_, x: Num| Ok(x.0.acosh()))?;
+            ctx.function("asinh", |_, x: Num| Ok(x.0.asinh()))?;
+            ctx.function("atanh", |_, x: Num| Ok(x.0.atanh()))?;
             ctx.function("atan2", |_, (x, y): (Num, Num)| Ok(x.0.atan2(y.0)))?;
             ctx.function("degrees", |_, x: Num| Ok(x.0.to_degrees()))?;
             ctx.function("radians", |_, x: Num| Ok(x.0.to_radians()))?;
