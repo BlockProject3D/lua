@@ -26,6 +26,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// Some macros are only used with vector feature and most macros are used in both quaternion and
+// features; so just disable the warnings.
+#![allow(unused_macros)]
+#![allow(unused_imports)]
+
 macro_rules! auto_lib {
     ($lua: ident ($lib: ident, $self_callable: expr) { $($name: ident: $fn: ident,)* }) => {
         $lua.create_library($lib, $self_callable, |ctx| {
