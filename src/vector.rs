@@ -31,6 +31,7 @@ use rlua::{Context, FromLua, Function, Number, ToLua, Value};
 use crate::{LuaEngine, ValueExt};
 use crate::number::{Num, Int, NumFromLua, NumToLua};
 use crate::macros::vec_wrapper_3;
+use crate::macros::vec_wrapper_2;
 use crate::macros::vec_wrapper_1;
 use crate::macros::vec_wrapper_2_uniform;
 use crate::macros::auto_lib;
@@ -74,7 +75,7 @@ impl<T> LuaVec2<T> {
 }
 
 impl<'lua, T> ToLua<'lua> for LuaVec2<T>
-    where T: NumToLua<'lua>
+    where T: NumToLua
 {
     fn to_lua(self, lua: Context<'lua>) -> rlua::Result<Value<'lua>> {
         let func: Function = lua.globals().raw_get(VEC2_NEW)?;
@@ -84,7 +85,7 @@ impl<'lua, T> ToLua<'lua> for LuaVec2<T>
 }
 
 impl<'lua, T> FromLua<'lua> for LuaVec2<T>
-    where T: NumFromLua<'lua>
+    where T: NumFromLua
 {
     fn from_lua(lua_value: Value<'lua>, _: Context<'lua>) -> rlua::Result<Self> {
         let table = lua_value.check_table()?;
@@ -120,7 +121,7 @@ impl<T> LuaVec3<T> {
 }
 
 impl<'lua, T> ToLua<'lua> for LuaVec3<T>
-    where T: NumToLua<'lua>
+    where T: NumToLua
 {
     fn to_lua(self, lua: Context<'lua>) -> rlua::Result<Value<'lua>> {
         let func: Function = lua.globals().raw_get(VEC3_NEW)?;
@@ -130,7 +131,7 @@ impl<'lua, T> ToLua<'lua> for LuaVec3<T>
 }
 
 impl<'lua, T> FromLua<'lua> for LuaVec3<T>
-    where T: NumFromLua<'lua>
+    where T: NumFromLua
 {
     fn from_lua(lua_value: Value<'lua>, _: Context<'lua>) -> rlua::Result<Self> {
         let table = lua_value.check_table()?;
@@ -167,7 +168,7 @@ impl<T> LuaVec4<T> {
 }
 
 impl<'lua, T> ToLua<'lua> for LuaVec4<T>
-    where T: NumToLua<'lua>
+    where T: NumToLua
 {
     fn to_lua(self, lua: Context<'lua>) -> rlua::Result<Value<'lua>> {
         let func: Function = lua.globals().raw_get(VEC4_NEW)?;
@@ -177,7 +178,7 @@ impl<'lua, T> ToLua<'lua> for LuaVec4<T>
 }
 
 impl<'lua, T> FromLua<'lua> for LuaVec4<T>
-    where T: NumFromLua<'lua>
+    where T: NumFromLua
 {
     fn from_lua(lua_value: Value<'lua>, _: Context<'lua>) -> rlua::Result<Self> {
         let table = lua_value.check_table()?;
@@ -215,6 +216,7 @@ vec_wrapper_1!(vec2_argmax (a: Vec2) => (Int, Num) {argminmax_to_lua(a.argmax())
 vec_wrapper_1!(vec2_normalize (a: Vec2) => Vec2 {a.normalize().into()});
 vec_wrapper_3!(vec2_lerp (a: Vec2, b: Vec2, f: Num) => Vec2 {a.lerp(&b.into_inner(), f.0).into()});
 vec_wrapper_3!(vec2_slerp (a: Vec2, b: Vec2, f: Num) => Vec2 {a.slerp(&b.into_inner(), f.0).into()});
+vec_wrapper_2!(vec2_push (a: Vec2, b: Num) => Vec3 {a.push(b.0).into()});
 
 vec_wrapper_2_uniform!(vec3_add (a, b): Vec3 => Vec3 {(a + b).into()});
 vec_wrapper_2_uniform!(vec3_sub (a, b): Vec3 => Vec3 {(a - b).into()});
@@ -231,8 +233,13 @@ vec_wrapper_1!(vec3_norm_squared (a: Vec3) => Number {a.norm_squared()});
 vec_wrapper_1!(vec3_argmin (a: Vec3) => (Int, Num) {argminmax_to_lua(a.argmin())});
 vec_wrapper_1!(vec3_argmax (a: Vec3) => (Int, Num) {argminmax_to_lua(a.argmax())});
 vec_wrapper_1!(vec3_normalize (a: Vec3) => Vec3 {a.normalize().into()});
+#[cfg(feature = "quaternion")]
+vec_wrapper_2!(vec3_rotate (a: Vec3, b: crate::quaternion::Quat) => Vec3 {
+    (nalgebra::Unit::new_unchecked(b.into_inner()) * a).into()
+});
 vec_wrapper_3!(vec3_lerp (a: Vec3, b: Vec3, f: Num) => Vec3 {a.lerp(&b.into_inner(), f.0).into()});
 vec_wrapper_3!(vec3_slerp (a: Vec3, b: Vec3, f: Num) => Vec3 {a.slerp(&b.into_inner(), f.0).into()});
+vec_wrapper_2!(vec3_push (a: Vec3, b: Num) => Vec4 {a.push(b.0).into()});
 
 vec_wrapper_2_uniform!(vec4_add (a, b): Vec4 => Vec4 {(a + b).into()});
 vec_wrapper_2_uniform!(vec4_sub (a, b): Vec4 => Vec4 {(a - b).into()});
@@ -260,15 +267,19 @@ impl Lib for LuaEngine {
             __le: vec2_le, __lt: vec2_lt, __eq: vec2_eq, __unm: vec2_unm,
             dot: vec2_dot, cross: vec2_cross, norm: vec2_norm, normSquared: vec2_norm_squared,
             argmin: vec2_argmin, argmax: vec2_argmax, lerp: vec2_lerp, slerp: vec2_slerp,
-            normalize: vec2_normalize,
+            normalize: vec2_normalize, push: vec2_push,
         })?;
         //Create constructor function.
         self.context(|ctx| {
-            let function = ctx.create_function(|ctx, (x, y): (Num, Num)| {
-                let globals = ctx.globals();
+            let function = ctx.create_function(|ctx, (x, y): (Num, Option<Num>)| {
+                let val = match y {
+                    Some(y) => Vector2::new(x.0, y.0),
+                    None => Vector2::from_element(x.0)
+                };
                 let table = ctx.create_table()?;
-                table.raw_set("x", x)?;
-                table.raw_set("y", y)?;
+                table.raw_set("x", val.x)?;
+                table.raw_set("y", val.y)?;
+                let globals = ctx.globals();
                 table.set_metatable(globals.raw_get(VEC2_LIB)?);
                 Ok(table)
             })?;
@@ -285,16 +296,26 @@ impl Lib for LuaEngine {
             __le: vec3_le, __lt: vec3_lt, __eq: vec3_eq, __unm: vec3_unm,
             dot: vec3_dot, cross: vec3_cross, norm: vec3_norm, normSquared: vec3_norm_squared,
             argmin: vec3_argmin, argmax: vec3_argmax, lerp: vec3_lerp, slerp: vec3_slerp,
-            normalize: vec3_normalize,
+            normalize: vec3_normalize, push: vec3_push,
+        })?;
+        #[cfg(feature = "quaternion")]
+        self.context(|ctx| {
+            let tbl: rlua::Table = ctx.globals().raw_get(VEC3_LIB)?;
+            tbl.raw_set("rotate", ctx.create_function(vec3_rotate)?)?;
+            Ok(())
         })?;
         //Create constructor function.
         self.context(|ctx| {
-            let function = ctx.create_function(|ctx, (x, y, z): (Num, Num, Num)| {
-                let globals = ctx.globals();
+            let function = ctx.create_function(|ctx, (x, y, z): (Num, Option<Num>, Option<Num>)| {
+                let val = match (y, z) {
+                    (Some(y), Some(z)) => Vector3::new(x.0, y.0, z.0),
+                    _ => Vector3::from_element(x.0)
+                };
                 let table = ctx.create_table()?;
-                table.raw_set("x", x)?;
-                table.raw_set("y", y)?;
-                table.raw_set("z", z)?;
+                table.raw_set("x", val.x)?;
+                table.raw_set("y", val.y)?;
+                table.raw_set("z", val.z)?;
+                let globals = ctx.globals();
                 table.set_metatable(globals.raw_get(VEC3_LIB)?);
                 Ok(table)
             })?;
@@ -315,13 +336,17 @@ impl Lib for LuaEngine {
         })?;
         //Create constructor function.
         self.context(|ctx| {
-            let function = ctx.create_function(|ctx, (x, y, z, w): (Num, Num, Num, Num)| {
-                let globals = ctx.globals();
+            let function = ctx.create_function(|ctx, (x, y, z, w): (Num, Option<Num>, Option<Num>, Option<Num>)| {
+                let val = match (y, z, w) {
+                    (Some(y), Some(z), Some(w)) => Vector4::new(x.0, y.0, z.0, w.0),
+                    _ => Vector4::from_element(x.0)
+                };
                 let table = ctx.create_table()?;
-                table.raw_set("x", x)?;
-                table.raw_set("y", y)?;
-                table.raw_set("z", z)?;
-                table.raw_set("w", w)?;
+                table.raw_set("x", val.x)?;
+                table.raw_set("y", val.y)?;
+                table.raw_set("z", val.z)?;
+                table.raw_set("w", val.w)?;
+                let globals = ctx.globals();
                 table.set_metatable(globals.raw_get(VEC4_LIB)?);
                 Ok(table)
             })?;

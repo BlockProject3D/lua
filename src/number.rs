@@ -76,25 +76,25 @@ impl<'lua> ToLua<'lua> for Int {
 // These implementation are possibly truncating numbers; the use case being rendering engines,
 // precision doesn't matter that much.
 
-pub trait NumToLua<'a> {
-    fn num_to_lua(self) -> Value<'a>;
+pub trait NumToLua {
+    fn num_to_lua<'a>(self) -> Value<'a>;
 }
 
-pub trait NumFromLua<'a> where Self: Sized {
-    fn num_from_lua(val: Value<'a>) -> rlua::Result<Self>;
+pub trait NumFromLua where Self: Sized {
+    fn num_from_lua(val: Value) -> rlua::Result<Self>;
 }
 
 macro_rules! impl_num_float {
     ($($target: ty)*) => {
         $(
-        impl<'a> NumToLua<'a> for $target {
-            fn num_to_lua(self) -> Value<'a> {
+        impl NumToLua for $target {
+            fn num_to_lua<'a>(self) -> Value<'a> {
                 Value::Number(self as Number)
             }
         }
 
-        impl<'a> NumFromLua<'a> for $target {
-            fn num_from_lua(val: Value<'a>) -> rlua::Result<Self> {
+        impl NumFromLua for $target {
+            fn num_from_lua(val: Value) -> rlua::Result<Self> {
                 val.check_number().map(|v| v as $target)
             }
         }
@@ -105,14 +105,14 @@ macro_rules! impl_num_float {
 macro_rules! impl_num_int {
     ($($target: ty)*) => {
         $(
-        impl<'a> NumToLua<'a> for $target {
-            fn num_to_lua(self) -> Value<'a> {
+        impl NumToLua for $target {
+            fn num_to_lua<'a>(self) -> Value<'a> {
                 Value::Integer(self as Integer)
             }
         }
 
-        impl<'a> NumFromLua<'a> for $target {
-            fn num_from_lua(val: Value<'a>) -> rlua::Result<Self> {
+        impl NumFromLua for $target {
+            fn num_from_lua(val: Value) -> rlua::Result<Self> {
                 val.check_integer().map(|v| v as $target)
             }
         }
