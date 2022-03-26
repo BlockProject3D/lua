@@ -91,7 +91,4 @@ impl LuaEngine {
     pub fn context<R, F: FnOnce(Context) -> rlua::Result<R>>(&self, function: F) -> rlua::Result<R> {
         self.state.context(function)
     }
-
-    //TODO: quaternion library
-    //TODO: matrix library
 }

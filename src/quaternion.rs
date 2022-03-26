@@ -163,12 +163,6 @@ impl Lib for LuaEngine {
             angle: quat_angle, angleTo: quat_angle_to, rotationTo: quat_rotation_to,
             slerp: quat_slerp, eulerAngles: quat_euler_angles,
         })?;
-        //Create identity constant.
-        self.context(|ctx| {
-            let tbl: Table = ctx.globals().raw_get(QUAT_LIB)?;
-            tbl.raw_set("IDENTITY", Quat::new(Quaternion::identity()))?;
-            Ok(())
-        })?;
         //Create constructor function.
         self.context(|ctx| {
             let function = ctx.create_function(|ctx, (v1, v2, v3, z): (Value, Option<Num>, Option<Num>, Option<Num>)| {
