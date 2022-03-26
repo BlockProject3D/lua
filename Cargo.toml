@@ -19,7 +19,4 @@ rlua = "0.19.1"
 [features]
 math = []
 vector = ["nalgebra"]
-point = ["nalgebra"]
-scale = ["nalgebra"]
 quaternion = ["vector"]
-matrix = ["nalgebra"]
