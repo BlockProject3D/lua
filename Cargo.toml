@@ -8,7 +8,7 @@ license = "BSD-3-Clause"
 repository = "https://gitlab.com/bp3d/lua"
 readme = "./README.MD"
 keywords = ["lua"]
-categories = []
+categories = ["graphics"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
