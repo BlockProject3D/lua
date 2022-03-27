@@ -28,9 +28,12 @@
 
 //! Fast implementation of numbers and integers.
 
+use num_traits::{cast, NumCast};
+use rlua::Error;
 use rlua::{Context, FromLua, Integer, Number, ToLua, Value};
 use crate::ValueExt;
 
+/// Fast encodable/decodable float type with no coercion and no range checking.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Num(pub Number);
 
@@ -52,6 +55,7 @@ impl<'lua> ToLua<'lua> for Num {
     }
 }
 
+/// Fast encodable/decodable integer type with no coercion and no range checking.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Int(pub Integer);
 
@@ -81,6 +85,7 @@ pub trait NumToLua {
 }
 
 pub trait NumFromLua where Self: Sized {
+    fn type_name() -> &'static str;
     fn num_from_lua(val: Value) -> rlua::Result<Self>;
 }
 
@@ -96,6 +101,10 @@ macro_rules! impl_num_float {
         impl NumFromLua for $target {
             fn num_from_lua(val: Value) -> rlua::Result<Self> {
                 val.check_number().map(|v| v as $target)
+            }
+
+            fn type_name() -> &'static str {
+                stringify!($target)
             }
         }
         )*
@@ -115,6 +124,10 @@ macro_rules! impl_num_int {
             fn num_from_lua(val: Value) -> rlua::Result<Self> {
                 val.check_integer().map(|v| v as $target)
             }
+
+            fn type_name() -> &'static str {
+                stringify!($target)
+            }
         }
         )*
     };
@@ -126,3 +139,31 @@ impl_num_int!(
     i8 i16 i32 i64
     u8 u16 u32 u64
 );
+
+/// A range checked number which does not implement number coercion for better performance.
+pub struct Checked<T>(pub T);
+
+impl<'lua, T: NumFromLua + NumCast> FromLua<'lua> for Checked<T> {
+    fn from_lua(lua_value: Value<'lua>, _: Context<'lua>) -> rlua::Result<Self> {
+        match lua_value {
+            Value::Integer(v) => {
+                cast(v).map(Checked).ok_or_else(|| Error::FromLuaConversionError {
+                    from: lua_value.type_name(),
+                    to: T::type_name(),
+                    message: Some("out of range".to_string()),
+                })
+            },
+            _ => Err(Error::FromLuaConversionError {
+                from: lua_value.type_name(),
+                to: T::type_name(),
+                message: Some("expected integer".to_string()),
+            })
+        }
+    }
+}
+
+impl<'lua, T: NumToLua> ToLua<'lua> for Checked<T> {
+    fn to_lua(self, _: Context<'lua>) -> rlua::Result<Value<'lua>> {
+        Ok(self.0.num_to_lua())
+    }
+}

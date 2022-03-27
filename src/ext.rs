@@ -57,6 +57,7 @@ impl<'a> ValueExt<'a> for Value<'a> {
     fn check_integer(self) -> Result<Integer> {
         match self {
             Value::Integer(v) => Ok(v),
+            Value::Number(v) => Ok(v as Integer),
             _ => Err(Error::FromLuaConversionError {
                 from: self.type_name(),
                 to: "Integer",
