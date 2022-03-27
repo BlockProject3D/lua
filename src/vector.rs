@@ -36,7 +36,7 @@ use crate::macros::vec_wrapper_1;
 use crate::macros::vec_wrapper_2_uniform;
 use crate::macros::auto_lib;
 
-pub trait Lib {
+pub trait LibVector {
     fn load_vec2(&self) -> rlua::Result<()>;
     fn load_vec3(&self) -> rlua::Result<()>;
     fn load_vec4(&self) -> rlua::Result<()>;
@@ -259,7 +259,7 @@ vec_wrapper_1!(vec4_normalize (a: Vec4) => Vec4 {a.normalize().into()});
 vec_wrapper_3!(vec4_lerp (a: Vec4, b: Vec4, f: Num) => Vec4 {a.lerp(&b.into_inner(), f.0).into()});
 vec_wrapper_3!(vec4_slerp (a: Vec4, b: Vec4, f: Num) => Vec4 {a.slerp(&b.into_inner(), f.0).into()});
 
-impl Lib for LuaEngine {
+impl LibVector for LuaEngine {
     fn load_vec2(&self) -> rlua::Result<()> {
         //Create the metatable.
         auto_lib!(self (VEC2_LIB, true) {
@@ -360,7 +360,7 @@ impl Lib for LuaEngine {
 #[cfg(test)]
 mod tests {
     use crate::LuaEngine;
-    use crate::vector::Lib;
+    use crate::vector::LibVector;
 
     #[test]
     fn basic() {

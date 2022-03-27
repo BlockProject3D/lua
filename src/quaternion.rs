@@ -37,8 +37,8 @@ use crate::macros::vec_wrapper_1;
 use crate::macros::vec_wrapper_3;
 use crate::macros::vec_wrapper_4;
 
-pub trait Lib {
-    fn load_quat(&self) -> rlua::Result<()>;
+pub trait LibQuaternion {
+    fn load_quaternion(&self) -> rlua::Result<()>;
 }
 
 const QUAT_LIB: &str = "quat";
@@ -148,8 +148,8 @@ vec_wrapper_1!(quat_euler_angles (a: Quat) => (Number, Number, Number) {
     Unit::new_unchecked(a).euler_angles()
 });
 
-impl Lib for LuaEngine {
-    fn load_quat(&self) -> rlua::Result<()> {
+impl LibQuaternion for LuaEngine {
+    fn load_quaternion(&self) -> rlua::Result<()> {
         auto_lib!(self (QUAT_LIB, true) {
             __add: quat_add, __sub: quat_sub, __mul: quat_mul, __eq: quat_eq,
             dot: quat_dot, inner: quat_inner, outer: quat_outer, project: quat_project,

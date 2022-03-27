@@ -53,11 +53,11 @@ fn math_gaussian(_: Context, (sigma, x): (Num, Num)) -> rlua::Result<Number> {
 
 // The reason why we provide a custom math lib is to have on par implementation with rust
 // and nalgebra, required for accurate rendering with the engine.
-pub trait Lib {
+pub trait LibMath {
     fn load_math(&self) -> rlua::Result<()>;
 }
 
-impl Lib for LuaEngine {
+impl LibMath for LuaEngine {
     fn load_math(&self) -> rlua::Result<()> {
         self.create_library("math", false, |ctx| {
             ctx.constant("PI", std::f64::consts::PI)?;
