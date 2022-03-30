@@ -60,8 +60,8 @@ pub trait LibMath {
 impl LibMath for LuaEngine {
     fn load_math(&self) -> rlua::Result<()> {
         self.create_library("math", false, |ctx| {
-            ctx.constant("PI", std::f64::consts::PI)?;
-            ctx.constant("E", std::f64::consts::E)?;
+            ctx.constant("pi", std::f64::consts::PI)?;
+            ctx.constant("e", std::f64::consts::E)?;
             ctx.function("cos", |_, x: Num| Ok(x.0.cos()))?;
             ctx.function("sin", |_, x: Num| Ok(x.0.sin()))?;
             ctx.function("tan", |_, x: Num| Ok(x.0.tan()))?;
@@ -77,9 +77,17 @@ impl LibMath for LuaEngine {
             ctx.function("atan2", |_, (x, y): (Num, Num)| Ok(x.0.atan2(y.0)))?;
             ctx.function("degrees", |_, x: Num| Ok(x.0.to_degrees()))?;
             ctx.function("radians", |_, x: Num| Ok(x.0.to_radians()))?;
-            ctx.function("floor", |_, x: Num| Ok(x.0.floor()))?;
-            ctx.function("ceil", |_, x: Num| Ok(x.0.ceil()))?;
-            ctx.function("round", |_, x: Num| Ok(x.0.round()))?;
+            ctx.function("abs", |_, x: Num| Ok(x.0.abs()))?;
+            ctx.function("exp", |_, x: Num| Ok(x.0.exp()))?;
+            ctx.function("log", |_, (x, base): (Num, Num)| Ok(x.0.log(base.0)))?;
+            ctx.function("ln", |_, x: Num| Ok(x.0.ln()))?;
+            ctx.function("log2", |_, x: Num| Ok(x.0.log2()))?;
+            ctx.function("log10", |_, x: Num| Ok(x.0.log10()))?;
+            ctx.function("sqrt", |_, x: Num| Ok(x.0.sqrt()))?;
+            ctx.function("floor", |_, x: Num| Ok(Int(x.0.floor() as _)))?;
+            ctx.function("ceil", |_, x: Num| Ok(Int(x.0.ceil() as _)))?;
+            ctx.function("round", |_, x: Num| Ok(Int(x.0.round() as _)))?;
+            ctx.function("int", |_, x: Num| Ok(Int(x.0 as _)))?;
             ctx.function("round2", math_round)?;
             ctx.function("pow", |_, (x, n): (Num, Num)| Ok(x.0.powf(n.0)))?;
             ctx.function("clamp", math_clamp)?;
