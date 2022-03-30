@@ -31,7 +31,9 @@
 // These functions are non standard but used to optimize 3D engines where access to numbers
 // MUST be VERY fast.
 
+use std::cell::Ref;
 use rlua::{Integer, Number, Table, Value, Result, Error};
+use rlua::prelude::LuaUserData;
 
 pub trait ValueExt<'a> {
     fn check_number(self) -> Result<Number>;
@@ -39,6 +41,7 @@ pub trait ValueExt<'a> {
     fn check_table(self) -> Result<Table<'a>>;
     fn check_bool(self) -> Result<bool>;
     fn check_string(&self) -> Result<&str>;
+    fn check_userdata<T: 'static + LuaUserData>(&self) -> Result<std::cell::Ref<T>>;
 }
 
 impl<'a> ValueExt<'a> for Value<'a> {
@@ -95,6 +98,17 @@ impl<'a> ValueExt<'a> for Value<'a> {
                 from: self.type_name(),
                 to: "String",
                 message: Some("expected string".to_string()),
+            })
+        }
+    }
+
+    fn check_userdata<T: 'static + LuaUserData>(&self) -> Result<Ref<T>> {
+        match self {
+            Value::UserData(v) => v.borrow(),
+            _ => Err(Error::FromLuaConversionError {
+                from: self.type_name(),
+                to: "Userdata",
+                message: Some("expected userdata".to_string()),
             })
         }
     }
