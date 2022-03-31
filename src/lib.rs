@@ -40,5 +40,8 @@ pub mod vector;
 #[cfg(feature = "quaternion")]
 pub mod quaternion;
 
+#[cfg(feature = "noise")]
+pub mod noise;
+
 pub use engine::*;
 pub use ext::*;

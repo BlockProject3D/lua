@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use nalgebra::{Quaternion, Unit, UnitQuaternion, Vector3};
-use rlua::{Context, FromLua, Function, Number, Table, ToLua, Value};
+use rlua::{Context, FromLua, Function, Number, ToLua, Value};
 use crate::{LuaEngine, ValueExt};
 use crate::number::{NumFromLua, NumToLua, Num};
 use crate::macros::auto_lib;
