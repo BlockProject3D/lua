@@ -26,15 +26,15 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::macros::auto_lib;
+use crate::macros::vec_wrapper_1;
+use crate::macros::vec_wrapper_2;
+use crate::macros::vec_wrapper_2_uniform;
+use crate::macros::vec_wrapper_3;
+use crate::number::{Int, Num, NumFromLua, NumToLua};
+use crate::{LuaEngine, ValueExt};
 use nalgebra::{Vector2, Vector3, Vector4};
 use rlua::{Context, FromLua, Function, Number, ToLua, Value};
-use crate::{LuaEngine, ValueExt};
-use crate::number::{Num, Int, NumFromLua, NumToLua};
-use crate::macros::vec_wrapper_3;
-use crate::macros::vec_wrapper_2;
-use crate::macros::vec_wrapper_1;
-use crate::macros::vec_wrapper_2_uniform;
-use crate::macros::auto_lib;
 
 pub trait LibVector {
     fn load_vec2(&self) -> rlua::Result<()>;
@@ -75,7 +75,8 @@ impl<T> LuaVec2<T> {
 }
 
 impl<'lua, T> ToLua<'lua> for LuaVec2<T>
-    where T: NumToLua
+where
+    T: NumToLua,
 {
     fn to_lua(self, lua: Context<'lua>) -> rlua::Result<Value<'lua>> {
         let func: Function = lua.globals().raw_get(VEC2_NEW)?;
@@ -85,13 +86,14 @@ impl<'lua, T> ToLua<'lua> for LuaVec2<T>
 }
 
 impl<'lua, T> FromLua<'lua> for LuaVec2<T>
-    where T: NumFromLua
+where
+    T: NumFromLua,
 {
     fn from_lua(lua_value: Value<'lua>, _: Context<'lua>) -> rlua::Result<Self> {
         let table = lua_value.check_table()?;
         Ok(LuaVec2(nalgebra::Vector2::new(
             T::num_from_lua(table.raw_get("x")?)?,
-            T::num_from_lua(table.raw_get("y")?)?
+            T::num_from_lua(table.raw_get("y")?)?,
         )))
     }
 }
@@ -121,7 +123,8 @@ impl<T> LuaVec3<T> {
 }
 
 impl<'lua, T> ToLua<'lua> for LuaVec3<T>
-    where T: NumToLua
+where
+    T: NumToLua,
 {
     fn to_lua(self, lua: Context<'lua>) -> rlua::Result<Value<'lua>> {
         let func: Function = lua.globals().raw_get(VEC3_NEW)?;
@@ -131,14 +134,15 @@ impl<'lua, T> ToLua<'lua> for LuaVec3<T>
 }
 
 impl<'lua, T> FromLua<'lua> for LuaVec3<T>
-    where T: NumFromLua
+where
+    T: NumFromLua,
 {
     fn from_lua(lua_value: Value<'lua>, _: Context<'lua>) -> rlua::Result<Self> {
         let table = lua_value.check_table()?;
         Ok(LuaVec3(nalgebra::Vector3::new(
             T::num_from_lua(table.raw_get("x")?)?,
             T::num_from_lua(table.raw_get("y")?)?,
-            T::num_from_lua(table.raw_get("z")?)?
+            T::num_from_lua(table.raw_get("z")?)?,
         )))
     }
 }
@@ -168,17 +172,24 @@ impl<T> LuaVec4<T> {
 }
 
 impl<'lua, T> ToLua<'lua> for LuaVec4<T>
-    where T: NumToLua
+where
+    T: NumToLua,
 {
     fn to_lua(self, lua: Context<'lua>) -> rlua::Result<Value<'lua>> {
         let func: Function = lua.globals().raw_get(VEC4_NEW)?;
         let [[x, y, z, w]] = self.0.data.0;
-        func.call((x.num_to_lua(), y.num_to_lua(), z.num_to_lua(), w.num_to_lua()))
+        func.call((
+            x.num_to_lua(),
+            y.num_to_lua(),
+            z.num_to_lua(),
+            w.num_to_lua(),
+        ))
     }
 }
 
 impl<'lua, T> FromLua<'lua> for LuaVec4<T>
-    where T: NumFromLua
+where
+    T: NumFromLua,
 {
     fn from_lua(lua_value: Value<'lua>, _: Context<'lua>) -> rlua::Result<Self> {
         let table = lua_value.check_table()?;
@@ -186,7 +197,7 @@ impl<'lua, T> FromLua<'lua> for LuaVec4<T>
             T::num_from_lua(table.raw_get("x")?)?,
             T::num_from_lua(table.raw_get("y")?)?,
             T::num_from_lua(table.raw_get("z")?)?,
-            T::num_from_lua(table.raw_get("w")?)?
+            T::num_from_lua(table.raw_get("w")?)?,
         )))
     }
 }
@@ -274,7 +285,7 @@ impl LibVector for LuaEngine {
             let function = ctx.create_function(|ctx, (x, y): (Num, Option<Num>)| {
                 let val = match y {
                     Some(y) => Vector2::new(x.0, y.0),
-                    None => Vector2::from_element(x.0)
+                    None => Vector2::from_element(x.0),
                 };
                 let table = ctx.create_table()?;
                 table.raw_set("x", val.x)?;
@@ -306,19 +317,20 @@ impl LibVector for LuaEngine {
         })?;
         //Create constructor function.
         self.context(|ctx| {
-            let function = ctx.create_function(|ctx, (x, y, z): (Num, Option<Num>, Option<Num>)| {
-                let val = match (y, z) {
-                    (Some(y), Some(z)) => Vector3::new(x.0, y.0, z.0),
-                    _ => Vector3::from_element(x.0)
-                };
-                let table = ctx.create_table()?;
-                table.raw_set("x", val.x)?;
-                table.raw_set("y", val.y)?;
-                table.raw_set("z", val.z)?;
-                let globals = ctx.globals();
-                table.set_metatable(globals.raw_get(VEC3_LIB)?);
-                Ok(table)
-            })?;
+            let function =
+                ctx.create_function(|ctx, (x, y, z): (Num, Option<Num>, Option<Num>)| {
+                    let val = match (y, z) {
+                        (Some(y), Some(z)) => Vector3::new(x.0, y.0, z.0),
+                        _ => Vector3::from_element(x.0),
+                    };
+                    let table = ctx.create_table()?;
+                    table.raw_set("x", val.x)?;
+                    table.raw_set("y", val.y)?;
+                    table.raw_set("z", val.z)?;
+                    let globals = ctx.globals();
+                    table.set_metatable(globals.raw_get(VEC3_LIB)?);
+                    Ok(table)
+                })?;
             let globals = ctx.globals();
             globals.raw_set(VEC3_NEW, function)?;
             Ok(())
@@ -336,20 +348,22 @@ impl LibVector for LuaEngine {
         })?;
         //Create constructor function.
         self.context(|ctx| {
-            let function = ctx.create_function(|ctx, (x, y, z, w): (Num, Option<Num>, Option<Num>, Option<Num>)| {
-                let val = match (y, z, w) {
-                    (Some(y), Some(z), Some(w)) => Vector4::new(x.0, y.0, z.0, w.0),
-                    _ => Vector4::from_element(x.0)
-                };
-                let table = ctx.create_table()?;
-                table.raw_set("x", val.x)?;
-                table.raw_set("y", val.y)?;
-                table.raw_set("z", val.z)?;
-                table.raw_set("w", val.w)?;
-                let globals = ctx.globals();
-                table.set_metatable(globals.raw_get(VEC4_LIB)?);
-                Ok(table)
-            })?;
+            let function = ctx.create_function(
+                |ctx, (x, y, z, w): (Num, Option<Num>, Option<Num>, Option<Num>)| {
+                    let val = match (y, z, w) {
+                        (Some(y), Some(z), Some(w)) => Vector4::new(x.0, y.0, z.0, w.0),
+                        _ => Vector4::from_element(x.0),
+                    };
+                    let table = ctx.create_table()?;
+                    table.raw_set("x", val.x)?;
+                    table.raw_set("y", val.y)?;
+                    table.raw_set("z", val.z)?;
+                    table.raw_set("w", val.w)?;
+                    let globals = ctx.globals();
+                    table.set_metatable(globals.raw_get(VEC4_LIB)?);
+                    Ok(table)
+                },
+            )?;
             let globals = ctx.globals();
             globals.raw_set(VEC4_NEW, function)?;
             Ok(())
@@ -359,15 +373,17 @@ impl LibVector for LuaEngine {
 
 #[cfg(test)]
 mod tests {
-    use crate::LuaEngine;
     use crate::vector::LibVector;
+    use crate::LuaEngine;
 
     #[test]
     fn basic() {
         let engine = LuaEngine::new().unwrap();
         engine.load_vec2().unwrap();
-        engine.context(|ctx| {
-            ctx.load(r#"
+        engine
+            .context(|ctx| {
+                ctx.load(
+                    r#"
                 local v = Vec2(0, 0)
                 local v1 = Vec2(2.5, 2.5)
                 local add = v + v1
@@ -379,23 +395,31 @@ mod tests {
                 print(sub.x, sub.y)
                 print(div.x, div.y)
                 print((-div):norm())
-            "#).exec()?;
-            Ok(())
-        }).unwrap();
+            "#,
+                )
+                .exec()?;
+                Ok(())
+            })
+            .unwrap();
     }
 
     #[test]
     fn mutate() {
         let engine = LuaEngine::new().unwrap();
         engine.load_vec2().unwrap();
-        engine.context(|ctx| {
-            ctx.load(r#"
+        engine
+            .context(|ctx| {
+                ctx.load(
+                    r#"
                 local v = Vec2(0.1, 0.1)
                 v.x = 0
                 v.y = 5
                 print(v:argmax())
-            "#).exec()?;
-            Ok(())
-        }).unwrap();
+            "#,
+                )
+                .exec()?;
+                Ok(())
+            })
+            .unwrap();
     }
 }

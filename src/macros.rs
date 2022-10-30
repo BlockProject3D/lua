@@ -53,7 +53,10 @@ macro_rules! vec_wrapper_2 {
 
 macro_rules! vec_wrapper_3 {
     ($name: ident ($this: ident: $in: ty, $other: ident: $in2: ty, $other2: ident: $in3: ty) => $out: ty { $code: expr }) => {
-        fn $name<'a>(_: Context<'a>, (this, $other, $other2): ($in, $in2, $in3)) -> rlua::Result<$out> {
+        fn $name<'a>(
+            _: Context<'a>,
+            (this, $other, $other2): ($in, $in2, $in3),
+        ) -> rlua::Result<$out> {
             let $this = this.into_inner();
             Ok($code)
         }
@@ -62,7 +65,10 @@ macro_rules! vec_wrapper_3 {
 
 macro_rules! vec_wrapper_4 {
     ($name: ident ($this: ident: $in: ty, $other: ident: $in2: ty, $other2: ident: $in3: ty, $other3: ident: $in4: ty) => $out: ty { $code: expr }) => {
-        fn $name<'a>(_: Context<'a>, (this, $other, $other2, $other3): ($in, $in2, $in3, $in4)) -> rlua::Result<$out> {
+        fn $name<'a>(
+            _: Context<'a>,
+            (this, $other, $other2, $other3): ($in, $in2, $in3, $in4),
+        ) -> rlua::Result<$out> {
             let $this = this.into_inner();
             Ok($code)
         }
@@ -91,6 +97,6 @@ macro_rules! vec_wrapper_2_uniform {
 pub(crate) use auto_lib;
 pub(crate) use vec_wrapper_1;
 pub(crate) use vec_wrapper_2;
+pub(crate) use vec_wrapper_2_uniform;
 pub(crate) use vec_wrapper_3;
 pub(crate) use vec_wrapper_4;
-pub(crate) use vec_wrapper_2_uniform;
