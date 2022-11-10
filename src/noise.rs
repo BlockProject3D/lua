@@ -26,14 +26,14 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::LuaEngine;
 use crate::number::{Checked, Int, Num};
+use crate::LuaEngine;
+use noise::Billow;
+use noise::NoiseFn;
+use noise::Perlin;
+use noise::Seedable;
 use rlua::UserData;
 use rlua::UserDataMethods;
-use noise::Perlin;
-use noise::NoiseFn;
-use noise::Billow;
-use noise::Seedable;
 
 pub trait LibNoise {
     fn load_noise(&self) -> rlua::Result<()>;
@@ -44,9 +44,15 @@ struct LuaPerlin(Perlin);
 impl UserData for LuaPerlin {
     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("getSeed", |_, this, ()| Ok(Checked(this.0.seed())));
-        methods.add_method("sample2d", |_, this, (x, y): (Num, Num)| Ok(this.0.get([x.0, y.0])));
-        methods.add_method("sample3d", |_, this, (x, y, z): (Num, Num, Num)| Ok(this.0.get([x.0, y.0, z.0])));
-        methods.add_method("sample4d", |_, this, (x, y, z, w): (Num, Num, Num, Num)| Ok(this.0.get([x.0, y.0, z.0, w.0])));
+        methods.add_method("sample2d", |_, this, (x, y): (Num, Num)| {
+            Ok(this.0.get([x.0, y.0]))
+        });
+        methods.add_method("sample3d", |_, this, (x, y, z): (Num, Num, Num)| {
+            Ok(this.0.get([x.0, y.0, z.0]))
+        });
+        methods.add_method("sample4d", |_, this, (x, y, z, w): (Num, Num, Num, Num)| {
+            Ok(this.0.get([x.0, y.0, z.0, w.0]))
+        });
     }
 }
 
@@ -55,9 +61,15 @@ struct LuaBillow(Billow);
 impl UserData for LuaBillow {
     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("getSeed", |_, this, ()| Ok(Checked(this.0.seed())));
-        methods.add_method("sample2d", |_, this, (x, y): (Num, Num)| Ok(this.0.get([x.0, y.0])));
-        methods.add_method("sample3d", |_, this, (x, y, z): (Num, Num, Num)| Ok(this.0.get([x.0, y.0, z.0])));
-        methods.add_method("sample4d", |_, this, (x, y, z, w): (Num, Num, Num, Num)| Ok(this.0.get([x.0, y.0, z.0, w.0])));
+        methods.add_method("sample2d", |_, this, (x, y): (Num, Num)| {
+            Ok(this.0.get([x.0, y.0]))
+        });
+        methods.add_method("sample3d", |_, this, (x, y, z): (Num, Num, Num)| {
+            Ok(this.0.get([x.0, y.0, z.0]))
+        });
+        methods.add_method("sample4d", |_, this, (x, y, z, w): (Num, Num, Num, Num)| {
+            Ok(this.0.get([x.0, y.0, z.0, w.0]))
+        });
         methods.add_method("getOctaves", |_, this, ()| Ok(Int(this.0.octaves as _)));
         methods.add_method("getFrequency", |_, this, ()| Ok(this.0.frequency));
         methods.add_method("getLacunarity", |_, this, ()| Ok(this.0.lacunarity));
@@ -87,13 +99,13 @@ impl LibNoise for LuaEngine {
             ctx.function("perlin", |_, seed: Option<Checked<u32>>| {
                 Ok(LuaPerlin(match seed {
                     None => Perlin::new(),
-                    Some(seed) => Perlin::new().set_seed(seed.0)
+                    Some(seed) => Perlin::new().set_seed(seed.0),
                 }))
             })?;
             ctx.function("billow", |_, seed: Option<Checked<u32>>| {
                 Ok(LuaBillow(match seed {
                     None => Billow::new(),
-                    Some(seed) => Billow::new().set_seed(seed.0)
+                    Some(seed) => Billow::new().set_seed(seed.0),
                 }))
             })?;
             Ok(())

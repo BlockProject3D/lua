@@ -26,16 +26,16 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use nalgebra::{Quaternion, Unit, UnitQuaternion, Vector3};
-use rlua::{Context, FromLua, Function, Number, ToLua, Value};
-use crate::{LuaEngine, ValueExt};
-use crate::number::{NumFromLua, NumToLua, Num};
 use crate::macros::auto_lib;
+use crate::macros::vec_wrapper_1;
 use crate::macros::vec_wrapper_2;
 use crate::macros::vec_wrapper_2_uniform;
-use crate::macros::vec_wrapper_1;
 use crate::macros::vec_wrapper_3;
 use crate::macros::vec_wrapper_4;
+use crate::number::{Num, NumFromLua, NumToLua};
+use crate::{LuaEngine, ValueExt};
+use nalgebra::{Quaternion, Unit, UnitQuaternion, Vector3};
+use rlua::{Context, FromLua, Function, Number, ToLua, Value};
 
 pub trait LibQuaternion {
     fn load_quaternion(&self) -> rlua::Result<()>;
@@ -70,17 +70,24 @@ impl<T> LuaQuat<T> {
 }
 
 impl<'lua, T> ToLua<'lua> for LuaQuat<T>
-    where T: NumToLua
+where
+    T: NumToLua,
 {
     fn to_lua(self, lua: Context<'lua>) -> rlua::Result<Value<'lua>> {
         let func: Function = lua.globals().raw_get(QUAT_NEW)?;
         let [[i, j, k, w]] = self.0.coords.data.0;
-        func.call((w.num_to_lua(), i.num_to_lua(), j.num_to_lua(), k.num_to_lua()))
+        func.call((
+            w.num_to_lua(),
+            i.num_to_lua(),
+            j.num_to_lua(),
+            k.num_to_lua(),
+        ))
     }
 }
 
 impl<'lua, T> FromLua<'lua> for LuaQuat<T>
-    where T: NumFromLua
+where
+    T: NumFromLua,
 {
     fn from_lua(lua_value: Value<'lua>, _: Context<'lua>) -> rlua::Result<Self> {
         let table = lua_value.check_table()?;
@@ -88,7 +95,7 @@ impl<'lua, T> FromLua<'lua> for LuaQuat<T>
             T::num_from_lua(table.raw_get("w")?)?,
             T::num_from_lua(table.raw_get("i")?)?,
             T::num_from_lua(table.raw_get("j")?)?,
-            T::num_from_lua(table.raw_get("k")?)?
+            T::num_from_lua(table.raw_get("k")?)?,
         )))
     }
 }
@@ -165,36 +172,41 @@ impl LibQuaternion for LuaEngine {
         })?;
         //Create constructor function.
         self.context(|ctx| {
-            let function = ctx.create_function(|ctx, (v1, v2, v3, z): (Value, Option<Num>, Option<Num>, Option<Num>)| {
-                let v = match (v2, v3, z) {
-                    (Some(i), Some(j), Some(k)) => {
-                        let w = v1.check_number()?;
-                        Quaternion::new(w, i.0, j.0, k.0)
-                    }, // wijk constructor
-                    (Some(pitch), Some(yaw), None) => {
-                        let roll = v1.check_number()?;
-                        UnitQuaternion::from_euler_angles(roll, pitch.0, yaw.0)
-                            .into_inner()
-                    }, // roll, pitch, yaw constructor
-                    (Some(angle), None, None) => {
-                        let axis = v1.check_table()?;
-                        let vec = Unit::new_unchecked(Vector3::new(axis.raw_get("x")?, axis.raw_get("y")?, axis.raw_get("z")?));
-                        UnitQuaternion::from_axis_angle(&vec, angle.0).into_inner()
-                    }, // axis, angle constructor
-                    _ => {
-                        let real = v1.check_number()?;
-                        Quaternion::from_real(real)
-                    }
-                };
-                let table = ctx.create_table()?;
-                table.raw_set("i", v.i)?;
-                table.raw_set("j", v.j)?;
-                table.raw_set("k", v.k)?;
-                table.raw_set("w", v.w)?;
-                let globals = ctx.globals();
-                table.set_metatable(globals.raw_get(QUAT_LIB)?);
-                Ok(table)
-            })?;
+            let function = ctx.create_function(
+                |ctx, (v1, v2, v3, z): (Value, Option<Num>, Option<Num>, Option<Num>)| {
+                    let v = match (v2, v3, z) {
+                        (Some(i), Some(j), Some(k)) => {
+                            let w = v1.check_number()?;
+                            Quaternion::new(w, i.0, j.0, k.0)
+                        } // wijk constructor
+                        (Some(pitch), Some(yaw), None) => {
+                            let roll = v1.check_number()?;
+                            UnitQuaternion::from_euler_angles(roll, pitch.0, yaw.0).into_inner()
+                        } // roll, pitch, yaw constructor
+                        (Some(angle), None, None) => {
+                            let axis = v1.check_table()?;
+                            let vec = Unit::new_unchecked(Vector3::new(
+                                axis.raw_get("x")?,
+                                axis.raw_get("y")?,
+                                axis.raw_get("z")?,
+                            ));
+                            UnitQuaternion::from_axis_angle(&vec, angle.0).into_inner()
+                        } // axis, angle constructor
+                        _ => {
+                            let real = v1.check_number()?;
+                            Quaternion::from_real(real)
+                        }
+                    };
+                    let table = ctx.create_table()?;
+                    table.raw_set("i", v.i)?;
+                    table.raw_set("j", v.j)?;
+                    table.raw_set("k", v.k)?;
+                    table.raw_set("w", v.w)?;
+                    let globals = ctx.globals();
+                    table.set_metatable(globals.raw_get(QUAT_LIB)?);
+                    Ok(table)
+                },
+            )?;
             let globals = ctx.globals();
             globals.raw_set(QUAT_NEW, function)?;
             Ok(())

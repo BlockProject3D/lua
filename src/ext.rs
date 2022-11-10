@@ -31,9 +31,9 @@
 // These functions are non standard but used to optimize 3D engines where access to numbers
 // MUST be VERY fast.
 
-use std::cell::Ref;
-use rlua::{Integer, Number, Table, Value, Result, Error};
 use rlua::prelude::LuaUserData;
+use rlua::{Error, Integer, Number, Result, Table, Value};
+use std::cell::Ref;
 
 pub trait ValueExt<'a> {
     fn check_number(self) -> Result<Number>;
@@ -53,7 +53,7 @@ impl<'a> ValueExt<'a> for Value<'a> {
                 from: self.type_name(),
                 to: "Number",
                 message: Some("expected number".to_string()),
-            })
+            }),
         }
     }
 
@@ -65,7 +65,7 @@ impl<'a> ValueExt<'a> for Value<'a> {
                 from: self.type_name(),
                 to: "Integer",
                 message: Some("expected integer".to_string()),
-            })
+            }),
         }
     }
 
@@ -76,7 +76,7 @@ impl<'a> ValueExt<'a> for Value<'a> {
                 from: self.type_name(),
                 to: "Table",
                 message: Some("expected table".to_string()),
-            })
+            }),
         }
     }
 
@@ -87,7 +87,7 @@ impl<'a> ValueExt<'a> for Value<'a> {
                 from: self.type_name(),
                 to: "Boolean",
                 message: Some("expected boolean".to_string()),
-            })
+            }),
         }
     }
 
@@ -98,7 +98,7 @@ impl<'a> ValueExt<'a> for Value<'a> {
                 from: self.type_name(),
                 to: "String",
                 message: Some("expected string".to_string()),
-            })
+            }),
         }
     }
 
@@ -109,7 +109,7 @@ impl<'a> ValueExt<'a> for Value<'a> {
                 from: self.type_name(),
                 to: "Userdata",
                 message: Some("expected userdata".to_string()),
-            })
+            }),
         }
     }
 }

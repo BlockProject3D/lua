@@ -26,16 +26,24 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use rlua::{Context, FromLuaMulti, Lua, StdLib, Table, ToLua, ToLuaMulti, Value};
 use crate::TableExt;
+use rlua::{Context, FromLuaMulti, Lua, StdLib, Table, ToLua, ToLuaMulti, Value};
 
 pub struct LibContext<'a> {
     ctx: Context<'a>,
-    table: Table<'a>
+    table: Table<'a>,
 }
 
 impl<'a> LibContext<'a> {
-    pub fn function<A: FromLuaMulti<'a>, R: ToLuaMulti<'a>, F: 'static + Send + Fn(Context, A) -> rlua::Result<R>>(&self, name: &str, function: F) -> rlua::Result<()> {
+    pub fn function<
+        A: FromLuaMulti<'a>,
+        R: ToLuaMulti<'a>,
+        F: 'static + Send + Fn(Context, A) -> rlua::Result<R>,
+    >(
+        &self,
+        name: &str,
+        function: F,
+    ) -> rlua::Result<()> {
         let func = self.ctx.create_function(function)?;
         self.table.raw_set(name, func)?;
         Ok(())
@@ -47,7 +55,7 @@ impl<'a> LibContext<'a> {
 }
 
 pub struct LuaEngine {
-    state: Lua
+    state: Lua,
 }
 
 fn strip_potentially_dangerous(state: &Lua) -> rlua::Result<()> {
@@ -64,20 +72,22 @@ fn strip_potentially_dangerous(state: &Lua) -> rlua::Result<()> {
 
 impl LuaEngine {
     pub fn new() -> rlua::Result<LuaEngine> {
-        let state = Lua::new_with(StdLib::BASE | StdLib::UTF8 | StdLib::STRING | StdLib::TABLE | StdLib::COROUTINE);
+        let state = Lua::new_with(
+            StdLib::BASE | StdLib::UTF8 | StdLib::STRING | StdLib::TABLE | StdLib::COROUTINE,
+        );
         strip_potentially_dangerous(&state)?;
-        Ok(LuaEngine {
-            state
-        })
+        Ok(LuaEngine { state })
     }
 
-    pub fn create_library<F: FnOnce(&LibContext) -> rlua::Result<()>>(&self, name: &str, self_callable: bool, function: F) -> rlua::Result<()> {
+    pub fn create_library<F: FnOnce(&LibContext) -> rlua::Result<()>>(
+        &self,
+        name: &str,
+        self_callable: bool,
+        function: F,
+    ) -> rlua::Result<()> {
         self.state.context(|ctx| {
             let table = ctx.create_table()?;
-            let libctx = LibContext {
-                ctx,
-                table
-            };
+            let libctx = LibContext { ctx, table };
             function(&libctx)?;
             if self_callable {
                 libctx.table.enable_self_callable()?;
@@ -88,7 +98,10 @@ impl LuaEngine {
         })
     }
 
-    pub fn context<R, F: FnOnce(Context) -> rlua::Result<R>>(&self, function: F) -> rlua::Result<R> {
+    pub fn context<R, F: FnOnce(Context) -> rlua::Result<R>>(
+        &self,
+        function: F,
+    ) -> rlua::Result<R> {
         self.state.context(function)
     }
 }

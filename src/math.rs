@@ -26,9 +26,9 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use rlua::{Context, Number};
-use crate::LuaEngine;
 use crate::number::{Int, Num};
+use crate::LuaEngine;
+use rlua::{Context, Number};
 
 fn math_clamp(_: Context, (x, min, max): (Num, Num, Num)) -> rlua::Result<Num> {
     if x.0 > max.0 {
