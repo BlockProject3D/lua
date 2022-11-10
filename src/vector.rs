@@ -199,6 +199,8 @@ fn argminmax_to_lua((id, val): (usize, Number)) -> (Int, Num) {
     (Int(id as _), Num(val))
 }
 
+//TODO: create special wrappers for operators to allow simple operations with scalars.
+
 vec_wrapper_2_uniform!(vec2_add (a, b): Vec2 => Vec2 {(a + b).into()});
 vec_wrapper_2_uniform!(vec2_sub (a, b): Vec2 => Vec2 {(a - b).into()});
 vec_wrapper_2_uniform!(vec2_mul (a, b): Vec2 => Vec2 {a.component_mul(&b).into()});
